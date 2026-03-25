@@ -176,18 +176,20 @@ The method I much prefer in my testing lab is to edit the `kubernetes-dashboard`
 2. Find the port on which the service is being served:
 
    ```bash
-   microk8s kubectl get svc -n kubernetes-dashboard | grep kubernetes-dashboard-kong-proxy
+   microk8s kubectl get svc -n kubernetes-dashboard kubernetes-dashboard-kong-proxy -o jsonpath='{.spec.ports[0].nodePort}'
    ```
 
    You'll see output similar to:
 
    ```text
-   kubernetes-dashboard-kong-proxy   NodePort   10.152.183.126   <none>   443:30098/TCP   2m24s
+   30380
    ```
 
-   Use the second port listed (after the colon). In this example that would give you `https://localhost:30098`.
+   This is the port number to use to access the service, so use this in the next step for the `PORT` variable. 
 
-3. Open your browser and navigate to `https://localhost:PORT`, substituting `PORT` with the port number from the previous step.
+3. Open your browser and navigate to `https://localhost:PORT`, substituting `PORT` with the port number from the previous step. 
+
+   In this example you would use `https://localhost:30380`, but make sure you use the correct `PORT` number for your service. This is dynamic and can change if you delete and recreate the service, and the port number I have here is unlikely to be your port number. 
 
    **Note**: Because this uses a self-signed certificate, your browser will show a "Privacy error." Click **Advanced** and then **Proceed to localhost**. You will be prompted for your bearer token to authenticate.
 
@@ -232,7 +234,7 @@ The Ingress method uses a "Front Door" controller to route traffic to your dashb
      name: kubernetes-dashboard-ingress
      namespace: kubernetes-dashboard
      annotations:
-       # Required: Tells Nginx the backend service uses HTTPS
+       # Required: Tells Nginx the backend service uses HTTPS as that's what kong-proxy requires
        nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
        # Optional: Prevents timeouts during long sessions
        nginx.ingress.kubernetes.io/proxy-connect-timeout: "300"
@@ -259,7 +261,7 @@ The Ingress method uses a "Front Door" controller to route traffic to your dashb
    You can validate the Ingress is created using:
 
    ```bash
-   kubectl get ingress -A
+   microk8s kubectl get ingress -A
    ```
 
    You should see output similar to:
