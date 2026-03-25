@@ -1,11 +1,8 @@
 # Access the Canonical MicroK8s Kubernetes Dashboard
 
-The steps in this tutorial are tested on Ubuntu 24.04 LTS with MicroK8s 1.33.9. This is tested with the Kubernetes cluster and browser on the same host. Virtualised deployments have different networking requirements and you should consider this when trying the steps.
-
-These steps use a Kubernetes bearer token to authenticate with the Kubernetes Dashboard. If you're using RBAC, use the steps in the [upstream Kubernetes documentation](https://github.com/kubernetes/dashboard/blob/master/docs/user/access-control/creating-sample-user.md).
-
 ## Contents
 
+- [Audience](#audience)
 - [Introduction](#introduction)
 - [Dashboard access options](#dashboard-access-options)
   - [kubectl port-forward](#kubectl-port-forward)
@@ -17,6 +14,16 @@ These steps use a Kubernetes bearer token to authenticate with the Kubernetes Da
 - [NodePort method](#nodeport-method)
 - [Ingress controller method](#ingress-controller-method)
 
+## Audience
+
+This guide is intended for developers running MicroK8s on a single local
+machine with a single-node cluster. It focuses on access patterns for the Kubernetes
+Dashboard in that environment. Multi-node clusters, RBAC-enabled setups, and VM networking scenarios are out of scope.
+
+The steps in this tutorial are tested on Ubuntu 24.04 LTS with MicroK8s 1.33.9. This is tested with the Kubernetes cluster and browser on the same host. Virtualised deployments have different networking requirements and you should consider this when trying the steps.
+
+These steps use a Kubernetes bearer token to authenticate with the Kubernetes Dashboard. If you're using RBAC, use the steps in the [upstream Kubernetes documentation](https://github.com/kubernetes/dashboard/blob/master/docs/user/access-control/creating-sample-user.md).
+
 ## Introduction
 
 I have always been frustrated with the documentation for accessing the Kubernetes Dashboard. I want to share the easiest methods you can use to set up Dashboard access.
@@ -26,35 +33,24 @@ The Kubernetes Dashboard setup documentation often suggests to use either the `k
 > [!NOTE]
 > This tutorial doesn't include step-by-step instructions for the `kubectl proxy` method as that seems to be the least preferred option as it exposes the whole Kubernetes API.
 
+Before you delve into the details, you might want a very quick suggestion on which method is right for you. Here are my thoughts:
+
+* Most developers: use the `kubectl port-forward` method
+* Homelabs: use the NodePort method
+* Production: use the Ingress method.
+
 ## Dashboard access options
 
 There are four primary ways to access the Dashboard. Choosing the right one depends on whether you need temporary or permanent access, and the level of security that suits your environment.
 
 All the methods shown here require you to provide a bearer token at the Dashboard authentication screen.
 
----
-
-**Comparison Summary**
-
-| Method | Setup Ease | Security | Best For... |
-|---|---|---|---|
-| Port-Forward | ⭐⭐⭐ | 🔒 High | Quick local debugging & development |
-| Proxy | ⭐⭐ | 🔒 High | Direct API interaction |
-| NodePort | ⭐⭐ | ⚠️ Low | Home labs and static network access |
-| Ingress | ⭐ | 🛡️ Very High | Production-grade local environments |
-
----
-
-**Access Options**
-
-| Method       | Best for        | Exposes publicly? | Requires kubectl running? |
-| ------------ | --------------- | ----------------- | ------------------------- |
-| Port-forward | Local dev       | No                | Yes                       |
-| Proxy        | Local dev       | No                | Yes                       |
-| NodePort     | LAN access      | Maybe             | No                        |
-| Ingress      | Production-like | Maybe             | No                        |
-
----
+| Method | Setup Ease | Security | Best For | Exposes to network? | Requires kubectl? |
+|---|---|---|---|---|---|
+| Port-forward | ⭐⭐⭐ | 🔒 High | Local debugging & development | No | Yes |
+| Proxy | ⭐⭐ | 🔒 High | Direct API interaction | No | Yes |
+| NodePort | ⭐⭐ | ⚠️ Low | Home labs and LAN access | Maybe | No |
+| Ingress | ⭐ | 🛡️ Very High | Production-grade local environments | Maybe | No |
 
 ### kubectl port-forward
 This creates a secure, temporary tunnel from your local machine directly to the Dashboard service.
@@ -144,7 +140,7 @@ The [Canonical documentation](https://canonical.com/microk8s/docs/addon-dashboar
 
 3. Paste your bearer token at the login screen.
 
-You can also set this up as a systemd service, but that's also more work than I care to do for this task.
+You can also set this up as a systemd service, but that's out of scope for this guide.
 
 ## NodePort method
 
