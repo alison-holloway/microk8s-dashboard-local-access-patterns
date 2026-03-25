@@ -14,6 +14,7 @@
 - [Port-forward method](#port-forward-method)
 - [NodePort method](#nodeport-method)
 - [Ingress controller method](#ingress-controller-method)
+- [Troubleshooting](#troubleshooting)
 
 ## Audience
 
@@ -270,8 +271,6 @@ The Ingress method uses a "Front Door" controller to route traffic to your dashb
 
 4. Open your browser and navigate to `https://dashboard.local`.
 
-   You must access the dashboard using HTTPS. If you use HTTP, the login page may load, but the bearer token will be rejected without an error message.
-
    **Note**: Because this uses a self-signed certificate, your browser will show a "Privacy error." Click **Advanced** and then **Proceed to dashboard.local**. You will be prompted for your bearer token to authenticate.
 
 5. Paste your bearer token at the login screen to authenticate and access the Dashboard.
@@ -281,3 +280,17 @@ The Ingress method uses a "Front Door" controller to route traffic to your dashb
    ```bash
    microk8s kubectl delete ingress -n kubernetes-dashboard kubernetes-dashboard-ingress
    ```
+
+## Troubleshooting
+
+### Bearer token is rejected with no error message
+
+Ensure you are accessing the Dashboard using HTTPS, not HTTP. If you use HTTP, the login page may load but silently reject the bearer token without displaying an error message.
+
+Use `https://` in the URL for whichever method you are using:
+
+| Method | Correct URL |
+|---|---|
+| Port-forward | `https://localhost:8443` |
+| NodePort | `https://localhost:PORT` |
+| Ingress | `https://dashboard.local` |
