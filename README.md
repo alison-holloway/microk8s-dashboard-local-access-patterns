@@ -6,7 +6,7 @@ These steps use a Kubernetes bearer token to authenticate with the Kubernetes Da
 
 ## Contents
 
-- [Problem](#problem)
+- [Introduction](#introduction)
 - [Prerequisites](#prerequisites)
 - [Dashboard access options](#dashboard-access-options)
   - [kubectl port-forward](#kubectl-port-forward)
@@ -17,15 +17,17 @@ These steps use a Kubernetes bearer token to authenticate with the Kubernetes Da
 - [NodePort method](#nodeport-method)
 - [Ingress controller method](#ingress-controller-method)
 
-## Problem
+## Introduction
 
-I have always been frustrated with the documentation for accessing the Kubernetes Dashboard. I want to share the easiest method that I've found to do this, even if it's not the most secure.
+I have always been frustrated with the documentation for accessing the Kubernetes Dashboard. I want to share the easiest methods you can use to set up Dashboard access.
 
 The Kubernetes Dashboard setup documentation often suggests to use either the `kubectl port-forward` or `kubectl proxy` methods. I find these methods awkward and temporary, which isn't helpful if you want to keep the Dashboard available over time. It's also quite confusing for new users.
 
 **Note**: This tutorial doesn't cover the `kubectl proxy` method as that seems to be the least preferred option as it exposes the whole Kubernetes API.
 
 ## Prerequisites
+
+The MicroK8s install creates a single node Kubernetes cluster, which is a tainted control plane node to allow you to run workloads on it. You also need to install the Dashboard and get the bearer token to access it. 
 
 1. Install MicroK8s:
 
@@ -101,7 +103,7 @@ This creates a secure, temporary tunnel from your local machine directly to the 
 This uses the Kubernetes API server as a gateway to reach the service.
 
 * **Benefits**: Reliable for reaching the API directly; no extra port configuration.
-* **Drawbacks**: The URL is extremely long and complex; can be slow; occasionally breaks CSS/Javascript loading.
+* **Drawbacks**: The URL is extremely long and complex; can be slow; occasionally breaks CSS/JavaScript loading.
 * **Security**: High. Like port-forwarding, it is restricted to local access only.
 
 ### NodePort
@@ -168,9 +170,9 @@ The method I much prefer in my testing lab is to edit the `kubernetes-dashboard`
 
    Use the second port listed (after the colon). In this example that would give you `https://localhost:30098`.
 
-3. Open your browser and navigate to `https://dashboard.local`.
+3. Open your browser and navigate to `https://localhost:PORT`, substituting `PORT` with the port number from the previous step.
 
-   **Note**: Because this uses a self-signed certificate, your browser will show a "Privacy error." Click **Advanced** and then **Proceed to dashboard.local**. You will be prompted for your bearer token to authenticate.
+   **Note**: Because this uses a self-signed certificate, your browser will show a "Privacy error." Click **Advanced** and then **Proceed to localhost**. You will be prompted for your bearer token to authenticate.
 
 
 ## Ingress controller method
@@ -229,5 +231,7 @@ The Ingress method uses a "Front Door" controller to route traffic to your dashb
    ```
 
 4. Open your browser and navigate to `https://dashboard.local`.
+
+   You must access the dashboard using HTTPS. If you use HTTP, the login page may load, but the bearer token will be rejected without an error message.
 
    **Note**: Because this uses a self-signed certificate, your browser will show a "Privacy error." Click **Advanced** and then **Proceed to dashboard.local**. You will be prompted for your bearer token to authenticate.
