@@ -4,6 +4,7 @@
 
 - [Audience](#audience)
 - [Introduction](#introduction)
+- [Choose your method](#choose-your-method)
 - [Dashboard access options](#dashboard-access-options)
   - [kubectl port-forward](#kubectl-port-forward)
   - [kubectl proxy](#kubectl-proxy)
@@ -33,11 +34,13 @@ The Kubernetes Dashboard setup documentation often suggests to use either the `k
 > [!NOTE]
 > This tutorial doesn't include step-by-step instructions for the `kubectl proxy` method as that seems to be the least preferred option as it exposes the whole Kubernetes API.
 
+## Choose your method
+
 Before you delve into the details, you might want a very quick suggestion on which method is right for you. Here are my thoughts:
 
-* Most developers: use the `kubectl port-forward` method
-* Homelabs: use the NodePort method
-* Production: use the Ingress method.
+* Most developers: use the [port-forward method](#port-forward-method)
+* Homelabs: use the [NodePort method](#nodeport-method)
+* Production: use the [Ingress method](#ingress-controller-method)
 
 ## Dashboard access options
 
@@ -128,6 +131,12 @@ The MicroK8s install creates a single node Kubernetes cluster that acts as both 
 
 ## Port-forward method
 
+```mermaid
+flowchart LR
+    B["Browser\nhttps://localhost:8443"] --> PF["kubectl port-forward\n(terminal process)"]
+    PF --> P["Dashboard Pod\n:443"]
+```
+
 The [Canonical documentation](https://canonical.com/microk8s/docs/addon-dashboard) suggests using the `kubectl port-forward` method. This is great if you want to have temporary access to the Dashboard, but becomes a little annoying when you want the Dashboard to be available for longer than the life of your terminal session. It also ties up your terminal (unless you append `&` to background the task or use a `tmux` session).
 
 1. Run the port-forward command:
@@ -144,10 +153,16 @@ You can also set this up as a systemd service, but that's out of scope for this 
 
 ## NodePort method
 
+```mermaid
+flowchart LR
+    B["Browser\nhttps://localhost:30098"] --> NS["NodePort Service\n:443"]
+    NS --> P["Dashboard Pod\n:443"]
+```
+
 The method I much prefer in my testing lab is to edit the `kubernetes-dashboard` service to use NodePort instead of ClusterIP. It's important to know this is less secure, but in my development environment I'm confident that nobody can get through my firewall and then through to my cluster. It's such an easy method, that it's worth writing about. I know from personal experience that technical writers out there are discouraged from documenting it.
 
 > [!WARNING]
-> This method does leave cluster access open to your whole network, so consider your environment security needs before you do this. An access token is still required to access the cluster.
+> This method leaves cluster access open to your whole network, so consider your environment security needs before you do this. An access token is still required to access the cluster.
 
 1. Edit the `kubernetes-dashboard` service and change `type: ClusterIP` to `type: NodePort`:
 
@@ -175,6 +190,13 @@ The method I much prefer in my testing lab is to edit the `kubernetes-dashboard`
 
 
 ## Ingress controller method
+
+```mermaid
+flowchart LR
+    B["Browser\nhttps://dashboard.local"] --> IC["Nginx Ingress Controller\n:443"]
+    IC --> S["kong-proxy Service\n:443"]
+    S --> P["Dashboard Pod\n:443"]
+```
 
 The Ingress method uses a "Front Door" controller to route traffic to your dashboard using a custom domain name. This is the most stable and production-like way to access your cluster services.
 
