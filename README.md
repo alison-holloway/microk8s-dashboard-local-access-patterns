@@ -23,53 +23,53 @@ I have always been frustrated with the documentation for accessing the Kubernete
 
 The Kubernetes Dashboard setup documentation often suggests to use either the `kubectl port-forward` or `kubectl proxy` methods. I find these methods awkward and temporary, which isn't helpful if you want to keep the Dashboard available over time. It's also quite confusing for new users.
 
-**Note**: This tutorial doesn't cover the `kubectl proxy` method as that seems to be the least preferred option as it exposes the whole Kubernetes API.
+> [!NOTE]
+> This tutorial doesn't include step-by-step instructions for the `kubectl proxy` method as that seems to be the least preferred option as it exposes the whole Kubernetes API.
 
 ## Prerequisites
 
-The MicroK8s install creates a single node Kubernetes cluster, which is a tainted control plane node to allow you to run workloads on it. You also need to install the Dashboard and get the bearer token to access it. 
+The MicroK8s install creates a single node Kubernetes cluster that acts as both the control plane and worker node. You also need to install the Dashboard and get the bearer token to access it.
 
 1. Install MicroK8s:
 
-   ```
+   ```bash
    sudo snap install microk8s --classic
    microk8s status --wait-ready
    sudo usermod -a -G microk8s $USER
    newgrp microk8s
    ```
 
-   **Note**: For the user settings to persist you'll need to log out and log back into the system. If this is a temporary deployment, make sure you're using the same terminal session to save you having to log out and in again.
+   > [!NOTE]
+   > For the user settings to persist you'll need to log out and log back into the system. If this is a temporary deployment, make sure you're using the same terminal session to save you having to log out and in again.
 
 2. Check the single node cluster is up:
 
-   ```
+   ```bash
    microk8s kubectl get nodes -o wide
    ```
 
    You should see output similar to:
 
-   ```
+   ```text
    NAME    STATUS   ROLES    AGE     VERSION   INTERNAL-IP      EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME
    beast   Ready    <none>   4h34m   v1.33.9   192.168.86.237   <none>        Ubuntu 24.04.4 LTS   6.17.0-19-generic   containerd://1.7.27
    ```
 
 3. Install the Dashboard:
 
-   ```
+   ```bash
    microk8s enable dashboard
    ```
 
 4. Get the access token. MicroK8s creates the secret that contains the access token (`microk8s-dashboard-token`) when it creates the single node cluster:
 
-   ```
+   ```bash
    microk8s kubectl get secret microk8s-dashboard-token -o jsonpath='{.data.token}' -n kube-system | base64 --decode
    ```
 
    You'll see output similar to:
 
-   ```
-   eyJhbGciOiJSUzI1NiIsImtpZCI6IlZxRWdQVGtUZkVJZVhaeVpnT1pOaUJvVTl1WWdFUmR3...
-   ```
+   `eyJhbGciOiJSUzI1NiIsImtpZCI6IlZxRWdQVGtUZkVJZVhaeVpnT1pOaUJvVTl1WWdFUmR3...`
 
    Copy the token output.
 
@@ -83,12 +83,12 @@ All the methods shown here require you to provide a bearer token at the Dashboar
 
 **Comparison Summary**
 
-| Method | Set up Ease | Security | Best For... |
+| Method | Setup Ease | Security | Best For... |
 |---|---|---|---|
 | Port-Forward | ⭐⭐⭐ | 🔒 High | Quick local debugging & development |
 | Proxy | ⭐⭐ | 🔒 High | Direct API interaction |
 | NodePort | ⭐⭐ | ⚠️ Low | Home labs and static network access |
-| Ingress | ⭐ | 🛡️ V. High | Production-grade local environments |
+| Ingress | ⭐ | 🛡️ Very High | Production-grade local environments |
 
 ---
 
@@ -116,7 +116,7 @@ This opens a specific port (range 30000-32767) on your host's physical IP addres
 ### Ingress Controller
 This uses an Ingress controller, like Nginx, that routes traffic to your Dashboard based on a hostname (for example, dashboard.local).
 
-* **Benefits**: Uses standard ports (80/443); handles SSL/TLS certificates centrally; the production-standard.
+* **Benefits**: Uses standard ports (80/443); handles SSL/TLS certificates centrally; the production standard.
 * **Drawbacks**: Most complex to set up; requires an Ingress controller (for example, `microk8s enable ingress`).
 * **Security**: Very High. Allows for advanced IP access listing, and proper SSL/TLS encryption.
 
@@ -127,17 +127,11 @@ The [Canonical documentation](https://canonical.com/microk8s/docs/addon-dashboar
 
 1. Run the port-forward command:
 
-   ```
+   ```bash
    microk8s kubectl -n kubernetes-dashboard port-forward svc/kubernetes-dashboard-kong-proxy 8443:443
    ```
 
 2. Open your browser and navigate to `https://localhost:8443`.
-
-   **Note**: Ubuntu tweaks are required to force the use of IPv4. Edit your `/etc/hosts` file to include `localhost` on this line:
-
-   ```
-   ::1     localhost ip6-localhost ip6-loopback
-   ```
 
 3. Paste your bearer token at the login screen.
 
@@ -148,23 +142,24 @@ You can also set this up as a systemd service, but that's also more work than I 
 
 The method I much prefer in my testing lab is to edit the `kubernetes-dashboard` service to use NodePort instead of ClusterIP. It's important to know this is less secure, but in my development environment I'm confident that nobody can get through my firewall and then through to my cluster. It's such an easy method, that it's worth writing about. I know from personal experience that technical writers out there are discouraged from documenting it.
 
-**Warning**: This method does leave cluster access open to your whole network, so consider your environment security needs before you do this. An access token is still required to access the cluster.
+> [!WARNING]
+> This method does leave cluster access open to your whole network, so consider your environment security needs before you do this. An access token is still required to access the cluster.
 
 1. Edit the `kubernetes-dashboard` service and change `type: ClusterIP` to `type: NodePort`:
 
-   ```
+   ```bash
    microk8s kubectl edit svc kubernetes-dashboard-kong-proxy -n kubernetes-dashboard
    ```
 
 2. Find the port on which the service is being served:
 
-   ```
+   ```bash
    microk8s kubectl get svc -n kubernetes-dashboard | grep kubernetes-dashboard-kong-proxy
    ```
 
    You'll see output similar to:
 
-   ```
+   ```text
    kubernetes-dashboard-kong-proxy   NodePort   10.152.183.126   <none>   443:30098/TCP   2m24s
    ```
 
@@ -172,7 +167,8 @@ The method I much prefer in my testing lab is to edit the `kubernetes-dashboard`
 
 3. Open your browser and navigate to `https://localhost:PORT`, substituting `PORT` with the port number from the previous step.
 
-   **Note**: Because this uses a self-signed certificate, your browser will show a "Privacy error." Click **Advanced** and then **Proceed to localhost**. You will be prompted for your bearer token to authenticate.
+   > [!NOTE]
+   > Because this uses a self-signed certificate, your browser will show a "Privacy error." Click **Advanced** and then **Proceed to localhost**. You will be prompted for your bearer token to authenticate.
 
 
 ## Ingress controller method
@@ -181,19 +177,19 @@ The Ingress method uses a "Front Door" controller to route traffic to your dashb
 
 1. Enable the Ingress addon. MicroK8s includes a built-in Nginx Ingress controller:
 
-   ```
+   ```bash
    microk8s enable ingress
    ```
 
 2. Map the domain to your machine. Since `dashboard.local` isn't a real website on the internet, you must tell Ubuntu to look for it on your own machine. Edit your `/etc/hosts` file:
 
-   ```
+   ```bash
    sudo nano /etc/hosts
    ```
 
    Add this line to the bottom:
 
-   ```
+   ```text
    127.0.0.1  dashboard.local
    ```
 
@@ -226,12 +222,32 @@ The Ingress method uses a "Front Door" controller to route traffic to your dashb
 
    Apply the configuration:
 
-   ```
+   ```bash
    microk8s kubectl apply -f dashboard-ingress.yaml
+   ```
+
+   You can validate the Ingress is created using:
+
+   ```bash
+   kubectl get ingress -A
+   ```
+
+   You should see output similar to:
+
+   ```text
+   NAMESPACE              NAME                           CLASS    HOSTS             ADDRESS     PORTS   AGE
+   kubernetes-dashboard   kubernetes-dashboard-ingress   public   dashboard.local   127.0.0.1   80      3m
    ```
 
 4. Open your browser and navigate to `https://dashboard.local`.
 
    You must access the dashboard using HTTPS. If you use HTTP, the login page may load, but the bearer token will be rejected without an error message.
 
-   **Note**: Because this uses a self-signed certificate, your browser will show a "Privacy error." Click **Advanced** and then **Proceed to dashboard.local**. You will be prompted for your bearer token to authenticate.
+   > [!NOTE]
+   > Because this uses a self-signed certificate, your browser will show a "Privacy error." Click **Advanced** and then **Proceed to dashboard.local**. You will be prompted for your bearer token to authenticate.
+
+5. If you want to remove the Ingress, use:
+
+   ```bash
+   microk8s kubectl delete ingress -n kubernetes-dashboard kubernetes-dashboard-ingress
+   ```
