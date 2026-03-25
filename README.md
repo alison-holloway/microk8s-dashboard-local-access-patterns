@@ -7,12 +7,12 @@ These steps use a Kubernetes bearer token to authenticate with the Kubernetes Da
 ## Contents
 
 - [Introduction](#introduction)
-- [Prerequisites](#prerequisites)
 - [Dashboard access options](#dashboard-access-options)
   - [kubectl port-forward](#kubectl-port-forward)
   - [kubectl proxy](#kubectl-proxy)
   - [NodePort](#nodeport)
   - [Ingress Controller](#ingress-controller)
+- [Prerequisites](#prerequisites)
 - [Port-forward method](#port-forward-method)
 - [NodePort method](#nodeport-method)
 - [Ingress controller method](#ingress-controller-method)
@@ -25,6 +25,64 @@ The Kubernetes Dashboard setup documentation often suggests to use either the `k
 
 > [!NOTE]
 > This tutorial doesn't include step-by-step instructions for the `kubectl proxy` method as that seems to be the least preferred option as it exposes the whole Kubernetes API.
+
+## Dashboard access options
+
+There are four primary ways to access the Dashboard. Choosing the right one depends on whether you need temporary or permanent access, and the level of security that suits your environment.
+
+All the methods shown here require you to provide a bearer token at the Dashboard authentication screen.
+
+---
+
+**Comparison Summary**
+
+| Method | Setup Ease | Security | Best For... |
+|---|---|---|---|
+| Port-Forward | ⭐⭐⭐ | 🔒 High | Quick local debugging & development |
+| Proxy | ⭐⭐ | 🔒 High | Direct API interaction |
+| NodePort | ⭐⭐ | ⚠️ Low | Home labs and static network access |
+| Ingress | ⭐ | 🛡️ Very High | Production-grade local environments |
+
+---
+
+**Access Options**
+
+| Method       | Best for        | Exposes publicly? | Requires kubectl running? |
+| ------------ | --------------- | ----------------- | ------------------------- |
+| Port-forward | Local dev       | No                | Yes                       |
+| Proxy        | Local dev       | No                | Yes                       |
+| NodePort     | LAN access      | Maybe             | No                        |
+| Ingress      | Production-like | Maybe             | No                        |
+
+---
+
+### kubectl port-forward
+This creates a secure, temporary tunnel from your local machine directly to the Dashboard service.
+
+* **Benefits**: Instant set up; no cluster configuration changes required; bypasses DNS issues.
+* **Drawbacks**: Must keep the terminal window open; tunnel can break if the Pod restarts.
+* **Security**: High. The service is only exposed to your local loopback (127.0.0.1). It's invisible to the rest of your network.
+
+### kubectl proxy
+This uses the Kubernetes API server as a gateway to reach the service.
+
+* **Benefits**: Reliable for reaching the API directly; no extra port configuration.
+* **Drawbacks**: The URL is extremely long and complex; can be slow; occasionally breaks CSS/JavaScript loading.
+* **Security**: High. Like port-forwarding, it is restricted to local access only.
+
+### NodePort
+This opens a specific port (range 30000-32767) on your host's physical IP address.
+
+* **Benefits**: Persistent (no terminal command needed); accessible from other devices on your network.
+* **Drawbacks**: Uses non-standard ports (for example, `32000`); manual port management is messy.
+* **Security**: Low/Risky. Your Dashboard login page is available on your network. Anyone with your IP and the port number can attempt to log in.
+
+### Ingress Controller
+This uses an Ingress controller, like Nginx, that routes traffic to your Dashboard based on a hostname (for example, dashboard.local).
+
+* **Benefits**: Uses standard ports (80/443); handles SSL/TLS certificates centrally; the production standard.
+* **Drawbacks**: Most complex to set up; requires an Ingress controller (for example, `microk8s enable ingress`).
+* **Security**: Very High. Allows for advanced IP access listing, and proper SSL/TLS encryption.
 
 ## Prerequisites
 
@@ -39,8 +97,7 @@ The MicroK8s install creates a single node Kubernetes cluster that acts as both 
    newgrp microk8s
    ```
 
-   > [!NOTE]
-   > For the user settings to persist you'll need to log out and log back into the system. If this is a temporary deployment, make sure you're using the same terminal session to save you having to log out and in again.
+   **Note**: For the user settings to persist you'll need to log out and log back into the system. If this is a temporary deployment, make sure you're using the same terminal session to save you having to log out and in again.
 
 2. Check the single node cluster is up:
 
@@ -73,54 +130,6 @@ The MicroK8s install creates a single node Kubernetes cluster that acts as both 
 
    Copy the token output.
 
-## Dashboard access options
-
-There are four primary ways to access the Dashboard. Choosing the right one depends on whether you need temporary or permanent access, and the level of security that suits your environment.
-
-All the methods shown here require you to provide a bearer token at the Dashboard authentication screen.
-
----
-
-**Comparison Summary**
-
-| Method | Setup Ease | Security | Best For... |
-|---|---|---|---|
-| Port-Forward | ⭐⭐⭐ | 🔒 High | Quick local debugging & development |
-| Proxy | ⭐⭐ | 🔒 High | Direct API interaction |
-| NodePort | ⭐⭐ | ⚠️ Low | Home labs and static network access |
-| Ingress | ⭐ | 🛡️ Very High | Production-grade local environments |
-
----
-
-### kubectl port-forward
-This creates a secure, temporary tunnel from your local machine directly to the Dashboard service.
-
-* **Benefits**: Instant set up; no cluster configuration changes required; bypasses DNS issues.
-* **Drawbacks**: Must keep the terminal window open; tunnel can break if the Pod restarts.
-* **Security**: High. The service is only exposed to your local loopback (127.0.0.1). It's invisible to the rest of your network.
-
-### kubectl proxy
-This uses the Kubernetes API server as a gateway to reach the service.
-
-* **Benefits**: Reliable for reaching the API directly; no extra port configuration.
-* **Drawbacks**: The URL is extremely long and complex; can be slow; occasionally breaks CSS/JavaScript loading.
-* **Security**: High. Like port-forwarding, it is restricted to local access only.
-
-### NodePort
-This opens a specific port (range 30000-32767) on your host's physical IP address.
-
-* **Benefits**: Persistent (no terminal command needed); accessible from other devices on your network.
-* **Drawbacks**: Uses non-standard ports (for example, `32000`); manual port management is messy.
-* **Security**: Low/Risky. Your Dashboard login page is available on your network. Anyone with your IP and the port number can attempt to log in.
-
-### Ingress Controller
-This uses an Ingress controller, like Nginx, that routes traffic to your Dashboard based on a hostname (for example, dashboard.local).
-
-* **Benefits**: Uses standard ports (80/443); handles SSL/TLS certificates centrally; the production standard.
-* **Drawbacks**: Most complex to set up; requires an Ingress controller (for example, `microk8s enable ingress`).
-* **Security**: Very High. Allows for advanced IP access listing, and proper SSL/TLS encryption.
-
-
 ## Port-forward method
 
 The [Canonical documentation](https://canonical.com/microk8s/docs/addon-dashboard) suggests using the `kubectl port-forward` method. This is great if you want to have temporary access to the Dashboard, but becomes a little annoying when you want the Dashboard to be available for longer than the life of your terminal session. It also ties up your terminal (unless you append `&` to background the task or use a `tmux` session).
@@ -136,7 +145,6 @@ The [Canonical documentation](https://canonical.com/microk8s/docs/addon-dashboar
 3. Paste your bearer token at the login screen.
 
 You can also set this up as a systemd service, but that's also more work than I care to do for this task.
-
 
 ## NodePort method
 
@@ -167,8 +175,7 @@ The method I much prefer in my testing lab is to edit the `kubernetes-dashboard`
 
 3. Open your browser and navigate to `https://localhost:PORT`, substituting `PORT` with the port number from the previous step.
 
-   > [!NOTE]
-   > Because this uses a self-signed certificate, your browser will show a "Privacy error." Click **Advanced** and then **Proceed to localhost**. You will be prompted for your bearer token to authenticate.
+   **Note**: Because this uses a self-signed certificate, your browser will show a "Privacy error." Click **Advanced** and then **Proceed to localhost**. You will be prompted for your bearer token to authenticate.
 
 
 ## Ingress controller method
@@ -243,8 +250,7 @@ The Ingress method uses a "Front Door" controller to route traffic to your dashb
 
    You must access the dashboard using HTTPS. If you use HTTP, the login page may load, but the bearer token will be rejected without an error message.
 
-   > [!NOTE]
-   > Because this uses a self-signed certificate, your browser will show a "Privacy error." Click **Advanced** and then **Proceed to dashboard.local**. You will be prompted for your bearer token to authenticate.
+   **Note**: Because this uses a self-signed certificate, your browser will show a "Privacy error." Click **Advanced** and then **Proceed to dashboard.local**. You will be prompted for your bearer token to authenticate.
 
 5. If you want to remove the Ingress, use:
 
