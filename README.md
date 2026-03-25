@@ -22,7 +22,7 @@ This guide is intended for developers running MicroK8s on a single local
 machine with a single-node cluster. It focuses on access patterns for the Kubernetes
 Dashboard in that environment. Multi-node clusters, RBAC-enabled setups, and VM networking scenarios are out of scope.
 
-The steps in this tutorial are tested on Ubuntu 24.04 LTS with MicroK8s 1.33.9. This is tested with the Kubernetes cluster and browser on the same host. Virtualised deployments have different networking requirements and you should consider this when trying the steps.
+The steps in this guide are tested on Ubuntu 24.04 LTS with MicroK8s 1.33.9. This is tested with the Kubernetes cluster and browser on the same host. Virtualised deployments have different networking requirements and you should consider this when trying the steps.
 
 These steps use a Kubernetes bearer token to authenticate with the Kubernetes Dashboard. If you're using RBAC, use the steps in the [upstream Kubernetes documentation](https://github.com/kubernetes/dashboard/blob/master/docs/user/access-control/creating-sample-user.md).
 
@@ -33,7 +33,7 @@ I have always been frustrated with the documentation for accessing the Kubernete
 The Kubernetes Dashboard setup documentation often suggests to use either the `kubectl port-forward` or `kubectl proxy` methods. I find these methods awkward and temporary, which isn't helpful if you want to keep the Dashboard available over time. It's also quite confusing for new users.
 
 > [!NOTE]
-> This tutorial doesn't include step-by-step instructions for the `kubectl proxy` method as that seems to be the least preferred option as it exposes the whole Kubernetes API.
+> This guide doesn't include step-by-step instructions for the `kubectl proxy` method as that seems to be the least preferred option as it exposes the whole Kubernetes API.
 
 ## Choose your method
 
