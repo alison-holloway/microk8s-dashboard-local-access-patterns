@@ -147,7 +147,9 @@ The [Canonical documentation](https://canonical.com/microk8s/docs/addon-dashboar
 
 2. Open your browser and navigate to `https://localhost:8443`.
 
-3. Paste your bearer token at the login screen.
+   **Note**: Because this uses a self-signed certificate, your browser will show a "Privacy error." Click **Advanced** and then **Proceed to localhost**. You will be prompted for your bearer token to authenticate.
+
+3. Paste your bearer token at the login screen to authenticate and access the Dashboard.
 
 You can also set this up as a systemd service, but that's out of scope for this guide.
 
@@ -187,6 +189,8 @@ The method I much prefer in my testing lab is to edit the `kubernetes-dashboard`
 3. Open your browser and navigate to `https://localhost:PORT`, substituting `PORT` with the port number from the previous step.
 
    **Note**: Because this uses a self-signed certificate, your browser will show a "Privacy error." Click **Advanced** and then **Proceed to localhost**. You will be prompted for your bearer token to authenticate.
+
+4. Paste your bearer token at the login screen to authenticate and access the Dashboard.
 
 
 ## Ingress controller method
@@ -270,7 +274,9 @@ The Ingress method uses a "Front Door" controller to route traffic to your dashb
 
    **Note**: Because this uses a self-signed certificate, your browser will show a "Privacy error." Click **Advanced** and then **Proceed to dashboard.local**. You will be prompted for your bearer token to authenticate.
 
-5. If you want to remove the Ingress, use:
+5. Paste your bearer token at the login screen to authenticate and access the Dashboard.
+
+6. If you want to remove the Ingress, use:
 
    ```bash
    microk8s kubectl delete ingress -n kubernetes-dashboard kubernetes-dashboard-ingress
